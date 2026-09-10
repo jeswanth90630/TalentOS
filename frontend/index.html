@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TalentOS — Company Open Vacancies & AI Talent Infrastructure</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- Top Navbar -->
+    <header class="navbar">
+      <div class="brand">
+        <div class="brand-icon">
+          <i class="fa-solid fa-brain"></i>
+        </div>
+        <div class="brand-text">Talent<span>OS</span></div>
+      </div>
+
+      <nav class="nav-links">
+        <button class="nav-btn active" data-tab="vacancies">
+          <i class="fa-solid fa-briefcase"></i> Open Vacancies
+        </button>
+
+        <!-- Recruiter-Only Tabs (Hidden by default for job seekers) -->
+        <button class="nav-btn recruiter-only-nav" data-tab="dashboard" style="display: none;">
+          <i class="fa-solid fa-chart-pie"></i> Recruiter Dashboard
+        </button>
+        <button class="nav-btn recruiter-only-nav" data-tab="jobs" style="display: none;">
+          <i class="fa-solid fa-layer-group"></i> Manage Jobs
+        </button>
+        <button class="nav-btn recruiter-only-nav" data-tab="candidates" style="display: none;">
+          <i class="fa-solid fa-users"></i> Candidates Database
+        </button>
+        <button class="nav-btn recruiter-only-nav" data-tab="matching" style="display: none;">
+          <i class="fa-solid fa-wand-magic-sparkles"></i> ATS Matching Engine
+        </button>
+      </nav>
+
+      <div class="nav-actions">
+        <div id="auth-status-container">
+          <button id="btn-login-modal" class="btn btn-secondary" onclick="openModal('modal-login')">
+            <i class="fa-solid fa-lock"></i> Recruiter Login
+          </button>
+          <div id="badge-recruiter-active" class="user-badge" style="display: none;">
+            <span class="dot-online"></span> Recruiter Authenticated
+            <button onclick="logoutRecruiter()" style="background: none; border: none; color: var(--accent-rose); cursor: pointer; margin-left: 0.5rem;" title="Logout Recruiter Session">
+              <i class="fa-solid fa-power-off"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+
+      <!-- ================= 0. PUBLIC CAREERS & VACANCIES PORTAL (JOB SEEKERS VIEW) ================= -->
+      <section id="view-vacancies" class="tab-view active">
+        <div class="page-header">
+          <div class="page-title">
+            <h1>Company Career Vacancies</h1>
+            <p>Discover open roles in Software Engineering, Quality Testing, AI Research, and Product Management.</p>
+          </div>
+        </div>
+
+        <!-- Role Category Filters -->
+        <div style="margin-bottom: 2rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+          <button class="role-filter-btn active" onclick="filterVacancies('All')">All Roles</button>
+          <button class="role-filter-btn" onclick="filterVacancies('Software Developer')">Software Developer</button>
+          <button class="role-filter-btn" onclick="filterVacancies('Tester')">Tester / QA</button>
+          <button class="role-filter-btn" onclick="filterVacancies('AI Research')">AI Specialist</button>
+          <button class="role-filter-btn" onclick="filterVacancies('Product')">Product Manager</button>
+        </div>
+
+        <div id="public-vacancies-grid" class="metrics-grid" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));">
+          <!-- Dynamic Public Vacancies Cards -->
+        </div>
+      </section>
+
+      <!-- ================= RECRUITER LOCK SCREEN OVERLAY ================= -->
+      <div id="recruiter-lock-overlay" style="display: none;" class="panel">
+        <div style="text-align: center; padding: 4rem 2rem;">
+          <div style="width: 80px; height: 80px; border-radius: 50%; background: #eff6ff; color: var(--accent-primary); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin: 0 auto 1.5rem auto; box-shadow: var(--shadow-glow);">
+            <i class="fa-solid fa-shield-halved"></i>
+          </div>
+          <h2 style="font-size: 1.6rem; font-weight: 700; margin-bottom: 0.5rem;">Recruiter Access Restricted</h2>
+          <p style="color: var(--text-muted); max-width: 500px; margin: 0 auto 1.5rem auto;">
+            Candidate shortlists, ATS match scores, recruiter notes, and candidate databases are strictly confidential and accessible to authenticated recruiters only.
+          </p>
+          <button class="btn btn-primary" onclick="openModal('modal-login')">
+            <i class="fa-solid fa-key"></i> Log In as Recruiter
+          </button>
+        </div>
+      </div>
+
+      <!-- ================= 1. RECRUITER DASHBOARD ================= -->
+      <section id="view-dashboard" class="tab-view recruiter-protected">
+        <div class="page-header">
+          <div class="page-title">
+            <h1>Recruiter Intelligence Dashboard</h1>
+            <p>Real-time hiring metrics, talent intelligence, and recruitment pipeline.</p>
+          </div>
+          <button class="btn btn-primary" onclick="openModal('modal-job')">
+            <i class="fa-solid fa-plus"></i> Create Job Opening
+          </button>
+        </div>
+
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-header">
+              <span>Total Candidates</span>
+              <div class="metric-icon"><i class="fa-solid fa-user-group"></i></div>
+            </div>
+            <div class="metric-value" id="metric-candidates">0</div>
+            <div class="metric-subtitle"><i class="fa-solid fa-arrow-trend-up"></i> Live database records</div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-header">
+              <span>Active Job Openings</span>
+              <div class="metric-icon"><i class="fa-solid fa-briefcase"></i></div>
+            </div>
+            <div class="metric-value" id="metric-jobs">0</div>
+            <div class="metric-subtitle"><i class="fa-solid fa-check"></i> Published & accepting apps</div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-header">
+              <span>Total Applications</span>
+              <div class="metric-icon"><i class="fa-solid fa-paper-plane"></i></div>
+            </div>
+            <div class="metric-value" id="metric-applications">0</div>
+            <div class="metric-subtitle"><i class="fa-solid fa-layer-group"></i> Active candidate workflows</div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-header">
+              <span>AI Matches Calculated</span>
+              <div class="metric-icon"><i class="fa-solid fa-sparkles"></i></div>
+            </div>
+            <div class="metric-value" id="metric-matches">0</div>
+            <div class="metric-subtitle"><i class="fa-solid fa-bolt"></i> Dynamic match matrix</div>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <div class="panel">
+            <div class="panel-header">
+              <h3>Hiring Pipeline Distribution</h3>
+              <span class="badge badge-published">Live Tracking</span>
+            </div>
+            <div id="pipeline-bars" style="display: flex; flex-direction: column; gap: 1.25rem;"></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <h3>Recent Candidate Applications</h3>
+              <button class="btn btn-secondary" onclick="switchTab('candidates')" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">View All</button>
+            </div>
+            <div id="dashboard-recent-matches" class="card-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 2. JOB MANAGEMENT PIPELINE ================= -->
+      <section id="view-jobs" class="tab-view recruiter-protected">
+        <div class="page-header">
+          <div class="page-title">
+            <h1>Job Openings Manager</h1>
+            <p>Publish openings, manage hiring criteria, and view candidate applications.</p>
+          </div>
+          <button class="btn btn-primary" onclick="openModal('modal-job')">
+            <i class="fa-solid fa-plus"></i> Post New Job Opening
+          </button>
+        </div>
+
+        <div id="jobs-list" class="card-list"></div>
+      </section>
+
+      <!-- ================= 3. CANDIDATE MANAGEMENT (LIST & KANBAN) ================= -->
+      <section id="view-candidates" class="tab-view recruiter-protected">
+        <div class="page-header">
+          <div class="page-title">
+            <h1>Candidates Database & Shortlist</h1>
+            <p>Candidate profiles, resume tracking, selection/rejection status, and notes.</p>
+          </div>
+          <div style="display: flex; gap: 0.5rem;">
+            <div style="background: #f1f5f9; padding: 4px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+              <button id="btn-view-list" class="btn btn-secondary" onclick="toggleCandidateView('list')" style="padding: 0.4rem 0.8rem; font-size: 0.82rem;">
+                <i class="fa-solid fa-list"></i> Directory
+              </button>
+              <button id="btn-view-kanban" class="btn btn-primary" onclick="toggleCandidateView('kanban')" style="padding: 0.4rem 0.8rem; font-size: 0.82rem;">
+                <i class="fa-solid fa-table-columns"></i> Kanban Board
+              </button>
+            </div>
+            <button class="btn btn-primary" onclick="openModal('modal-candidate')">
+              <i class="fa-solid fa-user-plus"></i> Add Profile
+            </button>
+          </div>
+        </div>
+
+        <div id="candidates-directory-view" style="display: none;">
+          <div id="candidates-list" class="card-list"></div>
+        </div>
+
+        <div id="candidates-kanban-view">
+          <div id="kanban-board-container" class="kanban-board"></div>
+        </div>
+      </section>
+
+      <!-- ================= 4. CANDIDATE MATCHING ENGINE ================= -->
+      <section id="view-matching" class="tab-view recruiter-protected">
+        <div class="page-header">
+          <div class="page-title">
+            <h1>Candidate ATS Matching & Ranking Matrix</h1>
+            <p>Backend automated candidate rankings per job vacancy, match percentage, and action controls.</p>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-bottom: 2rem;">
+          <div style="display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 250px;">
+              <label style="display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.4rem;">Select Target Job Opening:</label>
+              <select id="matching-job-select" class="form-select" onchange="loadJobMatchingRankings()"></select>
+            </div>
+            <div style="margin-top: 1.2rem;">
+              <button class="btn btn-primary" onclick="loadJobMatchingRankings()">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Calculate Matching Rankings
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div id="matching-results-container" class="card-list"></div>
+      </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; max-width: 1440px; margin: 0 auto;">
+        <div>
+          <strong style="color: var(--text-main); font-weight: 700;">TalentOS Enterprise Suite</strong>
+          <span style="color: var(--text-muted); font-size: 0.82rem; margin-left: 0.5rem;">v1.2.0 • AI-Powered Talent Intelligence & Candidate ATS Infrastructure</span>
+        </div>
+        <div style="color: var(--text-muted); font-size: 0.82rem;">
+          <span>© 2026 TalentOS Operations. All Rights Reserved.</span>
+          <span style="margin: 0 0.5rem;">•</span>
+          <span>Confidential Recruiter Workspace</span>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ================= MODALS ================= -->
+
+  <!-- Recruiter Login Modal -->
+  <div id="modal-login" class="modal-overlay">
+    <div class="modal-content" style="max-width: 420px;">
+      <div class="panel-header">
+        <h3><i class="fa-solid fa-lock"></i> Recruiter Authentication</h3>
+        <button class="btn btn-secondary" onclick="closeModal('modal-login')" style="padding: 0.2rem 0.5rem;"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="form-login" onsubmit="handleRecruiterLogin(event)">
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.2rem;">
+          Enter recruiter access passcode to unlock candidate databases, ATS match scores, and hiring workflows.
+        </p>
+        <div class="form-group">
+          <label>Recruiter Passcode</label>
+          <input type="password" id="login-passcode" class="form-input" placeholder="Default passcode: admin123" required>
+        </div>
+        <div style="text-align: right; margin-top: 1.5rem;">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modal-login')">Cancel</button>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-key"></i> Log In</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Candidate Detail Modal -->
+  <div id="modal-candidate-detail" class="modal-overlay">
+    <div class="modal-content" style="max-width: 650px;">
+      <div class="panel-header">
+        <h3 id="detail-candidate-name">Candidate Detail</h3>
+        <button class="btn btn-secondary" onclick="closeModal('modal-candidate-detail')" style="padding: 0.2rem 0.5rem;"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 1rem;">
+        <div class="score-box" style="padding: 1rem;">
+          <div>
+            <h4 id="detail-role" style="font-size: 1.1rem;">Role Title</h4>
+            <p id="detail-contact" style="font-size: 0.85rem; color: var(--text-muted);">email • phone</p>
+            <p id="detail-meta" style="font-size: 0.82rem; color: var(--accent-cyan); margin-top: 0.2rem;">Location • Exp</p>
+          </div>
+        </div>
+
+        <div>
+          <strong style="font-size: 0.8rem; color: var(--text-dim); display: block; margin-bottom: 0.3rem;">SKILLS:</strong>
+          <div id="detail-skills"></div>
+        </div>
+
+        <div>
+          <strong style="font-size: 0.8rem; color: var(--text-dim); display: block; margin-bottom: 0.3rem;">CANDIDATE SUMMARY / RESUME TEXT:</strong>
+          <p id="detail-summary" style="font-size: 0.88rem; background: rgba(0,0,0,0.3); padding: 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); max-height: 200px; overflow-y: auto;"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Public Job Application Modal -->
+  <div id="modal-apply-job" class="modal-overlay">
+    <div class="modal-content" style="max-width: 650px;">
+      <div class="panel-header">
+        <div>
+          <h3 id="apply-modal-job-title">Apply for Opening</h3>
+          <p style="font-size: 0.8rem; color: var(--accent-primary);" id="apply-modal-job-dept">Engineering Department</p>
+        </div>
+        <button class="btn btn-secondary" onclick="closeModal('modal-apply-job')" style="padding: 0.2rem 0.5rem;"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div id="apply-success-alert" style="display: none; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); padding: 1rem; border-radius: var(--radius-md); text-align: center; margin-bottom: 1rem;">
+        <i class="fa-solid fa-circle-check" style="font-size: 2.5rem; color: var(--accent-emerald); margin-bottom: 0.5rem;"></i>
+        <h4 style="color: var(--accent-emerald);">Application Submitted Successfully!</h4>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.3rem;">Thank you for applying. Your profile and resume have been securely logged in our system.</p>
+      </div>
+
+      <form id="form-apply-job" onsubmit="handlePublicJobApplication(event)">
+        <input type="hidden" id="apply-job-id">
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="app-name" class="form-input" placeholder="e.g. Jordan Lee" required>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" id="app-email" class="form-input" placeholder="jordan@example.com" required>
+          </div>
+          <div class="form-group">
+            <label>Phone Number</label>
+            <input type="tel" id="app-phone" class="form-input" placeholder="+1 (555) 000-0000" required>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label>Experience (Years)</label>
+            <input type="number" step="0.5" id="app-exp" class="form-input" value="3.0" required>
+          </div>
+          <div class="form-group">
+            <label>Current Location</label>
+            <input type="text" id="app-location" class="form-input" placeholder="e.g. Remote / San Francisco">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Technical Skills (comma-separated)</label>
+          <input type="text" id="app-skills" class="form-input" placeholder="e.g. Python, SQL, Testing, Docker" required>
+        </div>
+
+        <div class="form-group">
+          <label>Upload Resume File (.pdf or .docx)</label>
+          <input type="file" id="app-resume-file" class="form-input" accept=".pdf,.docx,.doc" required>
+        </div>
+
+        <div style="text-align: right; margin-top: 1.5rem;">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modal-apply-job')">Cancel</button>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i> Submit Job Application</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Create Job Modal -->
+  <div id="modal-job" class="modal-overlay">
+    <div class="modal-content">
+      <div class="panel-header">
+        <h3>Create Job Vacancy Opening</h3>
+        <button class="btn btn-secondary" onclick="closeModal('modal-job')" style="padding: 0.2rem 0.5rem;"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="form-job" onsubmit="handleCreateJob(event)">
+        <div class="form-group">
+          <label>Job Title</label>
+          <input type="text" id="job-title" class="form-input" placeholder="e.g. Senior Software Developer" required>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label>Department / Role Category</label>
+            <select id="job-dept" class="form-select" required>
+              <option value="Software Developer">Software Developer</option>
+              <option value="Tester">Tester / QA</option>
+              <option value="AI Research">AI Specialist</option>
+              <option value="Product">Product Manager</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Location</label>
+            <input type="text" id="job-loc" class="form-input" placeholder="e.g. Remote / New York" required>
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label>Required Experience (Years)</label>
+            <input type="number" id="job-exp" class="form-input" value="3" min="0">
+          </div>
+          <div class="form-group">
+            <label>Salary Range</label>
+            <input type="text" id="job-salary" class="form-input" placeholder="e.g. $110,000 - $150,000">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Required Skills (comma-separated)</label>
+          <input type="text" id="job-skills" class="form-input" placeholder="Python, FastAPI, SQL, Docker" required>
+        </div>
+        <div class="form-group">
+          <label>Job Description</label>
+          <textarea id="job-desc" class="form-textarea" rows="3" placeholder="Describe vacancy duties..." required></textarea>
+        </div>
+        <div style="text-align: right; margin-top: 1.5rem;">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modal-job')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Publish Job Opening</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add Candidate Modal -->
+  <div id="modal-candidate" class="modal-overlay">
+    <div class="modal-content">
+      <div class="panel-header">
+        <h3>Add Candidate Profile</h3>
+        <button class="btn btn-secondary" onclick="closeModal('modal-candidate')" style="padding: 0.2rem 0.5rem;"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="form-candidate" onsubmit="handleCreateCandidate(event)">
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="cand-name" class="form-input" placeholder="e.g. Jordan Lee" required>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" id="cand-email" class="form-input" placeholder="jordan@example.com" required>
+          </div>
+          <div class="form-group">
+            <label>Current Role / Title</label>
+            <input type="text" id="cand-role" class="form-input" placeholder="e.g. Software Developer">
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label>Experience (Years)</label>
+            <input type="number" step="0.5" id="cand-exp" class="form-input" value="3.0">
+          </div>
+          <div class="form-group">
+            <label>Education</label>
+            <input type="text" id="cand-edu" class="form-input" placeholder="B.S. Computer Science">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Skills (comma-separated)</label>
+          <input type="text" id="cand-skills" class="form-input" placeholder="Python, React, SQL" required>
+        </div>
+        <div class="form-group">
+          <label>Candidate Summary</label>
+          <textarea id="cand-summary" class="form-textarea" rows="3" placeholder="Summary..."></textarea>
+        </div>
+        <div style="text-align: right; margin-top: 1.5rem;">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modal-candidate')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Candidate Profile</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
